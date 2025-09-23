@@ -51,12 +51,12 @@ public class ApiResponse<T> {
         return success(data, "Operación completada exitosamente");
     }
 
-    public static <T> ApiResponse<T> error(String message, int statusCode) {
+    public static <T> ApiResponse<T> error(ErrorResponse e, String message, int statusCode) {
         return new ApiResponse<>(false, message, null, statusCode);
     }
 
     public static <T> ApiResponse<T> error(String message) {
-        return error(message, 500);
+        return new ApiResponse<>(false, message, null, 500);
     }
 
     // Getters y Setters

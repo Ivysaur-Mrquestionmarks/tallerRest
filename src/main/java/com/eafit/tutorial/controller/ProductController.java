@@ -7,9 +7,11 @@ import com.eafit.tutorial.util.ProductMapper;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.media.Content;
+import io.swagger.v3.oas.annotations.media.ExampleObject;
 import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
+import io.swagger.v3.oas.models.examples.Example;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.Min;
@@ -36,10 +38,25 @@ import java.util.Optional;
  */
 @RestController
 @RequestMapping("/api/v1/products")
-@Tag(name = "Products", description = "API para gestión de productos")
-@Validated
+@Tag(
+    name = "Products API",
+    description = """
+        ### 🛍️ API completa para gestión de productos
+
+        Permite realizar todas las operaciones CRUD sobre productos, incluyendo:
+        - Crear, leer, actualizar y eliminar productos
+        - Búsquedas avanzadas y filtrado
+        - Paginación y ordenamiento
+        - Gestión de inventario
+
+        **Endpoints organizados por funcionalidad:**
+        """
+)
 @CrossOrigin(origins = "*", maxAge = 3600)
+
 public class ProductController {
+
+
 
     private static final Logger logger = LoggerFactory.getLogger(ProductController.class);
 
@@ -49,15 +66,105 @@ public class ProductController {
     @Autowired
     private ProductMapper productMapper;
 
+
+
+
+    
     /**
      * Obtiene todos los productos con paginación opcional
      */
+
+
     @Operation(
+        operationId = "getAllProducts",
         summary = "Obtener productos",
-        description = "Obtiene todos los productos activos con paginación opcional y ordenamiento"
+description = """
+        ### Obtiene productos con múltiples opciones de consulta
+
+        **Opciones disponibles:**
+        - **Sin paginación**: `unpaged=true` retorna todos los productos
+        - **Con paginación**: Controla `page`, `size`, `sort` y `direction`
+        - **Ordenamiento**: Por cualquier campo (id, name, price, category, etc.)
+
+        **Ejemplos de uso:**
+        ```
+        GET /api/v1/products?unpaged=true
+        GET /api/v1/products?page=0&size=10&sort=name&direction=asc
+        GET /api/v1/products?page=1&size=5&sort=price&direction=desc
+        ```
+        """,
+
+         tags = {"Products - CRUD Operations"}
     )
+    @Tag(name = "Products - CRUD Operations", description = "Operaciones básicas CRUD")
     @ApiResponses({
-        @ApiResponse(responseCode = "200", description = "Lista de productos obtenida exitosamente"),
+          @ApiResponse(
+        responseCode = "200",
+        description = "Lista de productos obtenida exitosamente",
+        content = @Content(
+            mediaType = "application/json",
+            schema = @Schema(implementation = ApiResponse.class),
+            examples = {
+                @ExampleObject(
+                    name = "Lista simple",
+                    description = "Respuesta sin paginación",
+                    value = """
+                        {
+                          "success": true,
+                          "message": "Productos obtenidos exitosamente",
+                          "data": [
+                            {
+                              "id": 1,
+                              "name": "Laptop Gaming",
+                              "description": "Laptop de alto rendimiento",
+                              "price": 2999.99,
+                              "category": "Electrónicos",
+                              "stock": 15,
+                              "active": true,
+                              "createdAt": "2024-01-15 10:30:00",
+                              "updatedAt": "2024-01-15 10:30:00"
+                            }
+                          ],
+                          "timestamp": "2024-01-15 10:30:00",
+                          "statusCode": 200
+                        }
+                        """
+                ),
+                @ExampleObject(
+                    name = "Lista paginada",
+                    description = "Respuesta con paginación",
+                    value = """
+                        {
+                          "success": true,
+                          "message": "Productos paginados obtenidos exitosamente",
+                          "data": {
+                            "content": [
+                              {
+                                "id": 1,
+                                "name": "Laptop Gaming",
+                                "price": 2999.99,
+                                "category": "Electrónicos"
+                              }
+                            ],
+                            "page": {
+                              "number": 0,
+                              "size": 20,
+                              "totalElements": 150,
+                              "totalPages": 8,
+                              "first": true,
+                              "last": false,
+                              "hasNext": true,
+                              "hasPrevious": false
+                            }
+                          },
+                          "timestamp": "2024-01-15 10:30:00",
+                          "statusCode": 200
+                        }
+                        """
+                )
+            }
+        )
+    ),
         @ApiResponse(responseCode = "400", description = "Parámetros de consulta inválidos"),
         @ApiResponse(responseCode = "500", description = "Error interno del servidor")
     })
@@ -114,6 +221,10 @@ public class ProductController {
         }
     }
 
+
+
+    
+
     /**
      * Obtiene un producto por ID
      */
@@ -121,6 +232,7 @@ public class ProductController {
         summary = "Obtener producto por ID",
         description = "Obtiene un producto específico por su identificador único"
     )
+    @Tag(name = "Products - CRUD Operations", description = "Operaciones básicas CRUD")
     @ApiResponses({
         @ApiResponse(responseCode = "200", description = "Producto encontrado"),
         @ApiResponse(responseCode = "404", description = "Producto no encontrado"),
@@ -161,12 +273,63 @@ public class ProductController {
         summary = "Crear producto",
         description = "Crea un nuevo producto en el sistema"
     )
+    @Tag(name = "Products - CRUD Operations", description = "Operaciones básicas CRUD")
     @ApiResponses({
         @ApiResponse(responseCode = "201", description = "Producto creado exitosamente"),
         @ApiResponse(responseCode = "400", description = "Datos de entrada inválidos"),
         @ApiResponse(responseCode = "409", description = "El producto ya existe"),
         @ApiResponse(responseCode = "500", description = "Error interno del servidor")
     })
+    // Agregar a método createProduct:
+@io.swagger.v3.oas.annotations.parameters.RequestBody(
+    description = "Datos del nuevo producto a crear",
+    required = true,
+    content = @Content(
+        mediaType = "application/json",
+        schema = @Schema(implementation = CreateProductDTO.class),
+        examples = {
+            @ExampleObject(
+                name = "Producto electrónico",
+                description = "Ejemplo de producto de tecnología",
+                value = """
+                    {
+                      "name": "Smartphone Pro Max",
+                      "description": "Teléfono inteligente de última generación con cámara de 108MP",
+                      "price": 1299.99,
+                      "category": "Electrónicos",
+                      "stock": 50
+                    }
+                    """
+            ),
+            @ExampleObject(
+                name = "Libro",
+                description = "Ejemplo de libro",
+                value = """
+                    {
+                      "name": "Clean Code",
+                      "description": "Guía para escribir código limpio y mantenible",
+                      "price": 45.99,
+                      "category": "Libros",
+                      "stock": 25
+                    }
+                    """
+            ),
+            @ExampleObject(
+                name = "Ropa",
+                description = "Ejemplo de prenda de vestir",
+                value = """
+                    {
+                      "name": "Camiseta Casual",
+                      "description": "Camiseta de algodón 100% en varios colores",
+                      "price": 29.99,
+                      "category": "Ropa",
+                      "stock": 100
+                    }
+                    """
+            )
+        }
+    )
+)
     @PostMapping
     public ResponseEntity<com.eafit.tutorial.dto.ApiResponse<ProductDTO>> createProduct(
             @Parameter(description = "Datos del nuevo producto", required = true)
@@ -195,6 +358,7 @@ public class ProductController {
                 .body(com.eafit.tutorial.dto.ApiResponse.error("Error interno del servidor"));
         }
     }
+    
 
     /**
      * Actualiza un producto existente
@@ -203,6 +367,7 @@ public class ProductController {
         summary = "Actualizar producto",
         description = "Actualiza un producto existente por su ID"
     )
+    @Tag(name = "Products - CRUD Operations", description = "Operaciones básicas CRUD")
     @ApiResponses({
         @ApiResponse(responseCode = "200", description = "Producto actualizado exitosamente"),
         @ApiResponse(responseCode = "400", description = "Datos de entrada inválidos"),
@@ -252,6 +417,7 @@ public class ProductController {
         summary = "Eliminar producto",
         description = "Elimina lógicamente un producto (lo marca como inactivo)"
     )
+    @Tag(name = "Products - CRUD Operations", description = "Operaciones básicas CRUD")
     @ApiResponses({
         @ApiResponse(responseCode = "200", description = "Producto eliminado exitosamente"),
         @ApiResponse(responseCode = "404", description = "Producto no encontrado"),
@@ -291,6 +457,7 @@ public class ProductController {
         summary = "Buscar por categoría",
         description = "Obtiene todos los productos de una categoría específica"
     )
+    @Tag(name = "Products - Search & Filter", description = "Búsquedas y filtros avanzados")
     @GetMapping("/category/{category}")
     public ResponseEntity<com.eafit.tutorial.dto.ApiResponse<List<ProductDTO>>> getProductsByCategory(
             @Parameter(description = "Nombre de la categoría", example = "Electrónicos", required = true)
@@ -320,6 +487,7 @@ public class ProductController {
         summary = "Buscar por rango de precio",
         description = "Obtiene productos dentro de un rango de precios específico"
     )
+    @Tag(name = "Products - Search & Filter", description = "Búsquedas y filtros avanzados")
     @GetMapping("/price-range")
     public ResponseEntity<com.eafit.tutorial.dto.ApiResponse<List<ProductDTO>>> getProductsByPriceRange(
             @Parameter(description = "Precio mínimo", example = "100.00", required = true)
@@ -357,6 +525,7 @@ public class ProductController {
         summary = "Buscar por nombre",
         description = "Busca productos que contengan el texto especificado en su nombre"
     )
+    @Tag(name = "Products - Search & Filter", description = "Búsquedas y filtros avanzados")
     @GetMapping("/search")
     public ResponseEntity<com.eafit.tutorial.dto.ApiResponse<List<ProductDTO>>> searchProductsByName(
             @Parameter(description = "Texto a buscar en el nombre", example = "laptop", required = true)
@@ -386,6 +555,7 @@ public class ProductController {
         summary = "Productos con stock bajo",
         description = "Obtiene productos cuyo stock sea menor al límite especificado"
     )
+     @Tag(name = "Products - Inventory Management", description = "Gestión de inventario")
     @GetMapping("/low-stock")
     public ResponseEntity<com.eafit.tutorial.dto.ApiResponse<List<ProductDTO>>> getProductsWithLowStock(
             @Parameter(description = "Límite de stock", example = "10", required = true)
@@ -415,6 +585,7 @@ public class ProductController {
         summary = "Actualizar stock",
         description = "Actualiza únicamente el stock de un producto específico"
     )
+     @Tag(name = "Products - Inventory Management", description = "Gestión de inventario")
     @PatchMapping("/{id}/stock")
     public ResponseEntity<com.eafit.tutorial.dto.ApiResponse<ProductDTO>> updateProductStock(
             @Parameter(description = "ID del producto", example = "1", required = true)
@@ -445,4 +616,10 @@ public class ProductController {
                 .body(com.eafit.tutorial.dto.ApiResponse.error("Error interno del servidor"));
         }
     }
+
+ 
+
+
+
+
 }
