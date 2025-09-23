@@ -1,4 +1,4 @@
-package com.eafit.repository;
+package com.eafit.tutorial.repository;
 
 import com.eafit.tutorial.model.Product;
 import org.springframework.data.domain.Page;
